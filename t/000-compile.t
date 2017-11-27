@@ -1,6 +1,7 @@
 use v6.c;
 use Test;
 
-plan 1;
+plan 2;
 
 use-ok('Inline::Go');
+use-ok('Inline::Go::Grammar');
