@@ -16,7 +16,7 @@ use v6.c;
 unit grammar Inline::Go::Grammar;
 
 # SourceFile = PackageClause ";" { ImportDecl ";" } { TopLevelDecl ";" } .
-token TOP { <PackageClause> ';'? (<ImportDecl> ';'?)* }
+token TOP { <PackageClause> ';'? (<ImportDecl> ';'?)* ( <TopLevelDecl> ";"? )* }
 
 # PackageClause  = "package" PackageName .
 # PackageName    = identifier .
@@ -29,6 +29,123 @@ rule PackageName   { <identifier> }
 rule ImportDecl { "import" ( <ImportSpec> | '(' ( <ImportSpec> ';'? )* ')' ) }
 rule ImportSpec { ( '.' | <PackageName> )? <ImportPath> }
 rule ImportPath { <string_lit> }
+
+# Declaration   = ConstDecl | TypeDecl | VarDecl .
+# TopLevelDecl  = Declaration | FunctionDecl | MethodDecl .
+rule Declaration  { <ConstDecl> | <TypeDecl> | <VarDecl> }
+rule TopLevelDecl { <Declaration> | <FunctionDecl> | <MethodDecl> }
+
+# ConstDecl      = "const" ( ConstSpec | "(" { ConstSpec ";" } ")" ) .
+# ConstSpec      = IdentifierList [ [ Type ] "=" ExpressionList ] .
+#
+# IdentifierList = identifier { "," identifier } .
+# ExpressionList = Expression { "," Expression } .
+rule ConstDecl      { "const" ( <ConstSpec> | "(" ( <ConstSpec> ";"? )* ")" ) }
+rule ConstSpec      { <IdentifierList> ( <Type>? "=" <ExpressionList> )?      }
+
+rule IdentifierList { <identifier> ( "," <identifier> )* }
+rule ExpressionList { <Expression> ( "," <Expression> )* }
+
+# TypeDecl = "type" ( TypeSpec | "(" { TypeSpec ";" } ")" ) .
+# TypeSpec = AliasDecl | TypeDef .
+rule TypeDecl { "type" ( <TypeSpec> | "(" ( <TypeSpec> ";"? )* ")" ) }
+rule TypeSpec { <AliasDecl> | <TypeDef> }
+
+# AliasDecl = identifier "=" Type .
+rule AliasDecl { <identifier> "=" <Type> }
+
+# TypeDef = identifier Type .
+rule TypeDef { <identifier> <Type> }
+
+# VarDecl = "var" ( VarSpec | "(" { VarSpec ";" } ")" ) .
+# VarSpec = IdentifierList ( Type [ "=" ExpressionList ] | "=" ExpressionList ) .
+rule VarDecl     { "var" ( <VarSpec> | "(" ( <VarSpec> ";"? )* ")" ) }
+rule VarSpec     { <IdentifierList> ( <Type> [ "=" <ExpressionList> ] | "=" <ExpressionList> ) }
+
+# FunctionDecl = "func" FunctionName ( Function | Signature ) .
+# FunctionName = identifier .
+# Function     = Signature FunctionBody .
+# FunctionBody = Block .
+rule FunctionDecl { "func" <FunctionName> ( <Function> | <Signature> ) }
+rule FunctionName { <identifier> }
+rule Function     { <Signature> <FunctionBody> }
+rule FunctionBody { <Block> }
+
+# MethodDecl = "func" Receiver MethodName ( Function | Signature ) .
+# Receiver   = Parameters .
+rule MethodDecl { "func" <Receiver> <MethodName> ( <Function> | <Signature> ) }
+rule Receiver   { <Parameters> }
+
+# FunctionType   = "func" Signature .
+# Signature      = Parameters [ Result ] .
+# Result         = Parameters | Type .
+# Parameters     = "(" [ ParameterList [ "," ] ] ")" .
+# ParameterList  = ParameterDecl { "," ParameterDecl } .
+# ParameterDecl  = [ IdentifierList ] [ "..." ] Type .
+rule FunctionType   { "func" <Signature>                       }
+rule Signature      { <Parameters> <Result>?                   }
+rule Result         { <Parameters> | <Type>                    }
+rule Parameters     { "(" ( <ParameterList> ","? )? ")"        }
+rule ParameterList  { <ParameterDecl> ( "," <ParameterDecl> )* }
+rule ParameterDecl  { <IdentifierList>? "..."? <Type>          }
+
+# Type      = TypeName | TypeLit | "(" Type ")" .
+# TypeName  = identifier | QualifiedIdent .
+# TypeLit   = ArrayType | StructType | PointerType | FunctionType | InterfaceType |
+# 	    SliceType | MapType | ChannelType .
+rule Type     { <TypeName> | <TypeLit> | "(" <Type> ")" }
+rule TypeName { <identifier> | <QualifiedIdent> }
+rule TypeLit  { <ArrayType> | <StructType> | <PointerType> | <FunctionType> |
+                <InterfaceType> | <SliceType> | <MapType> | <ChannelType> }
+
+# ArrayType   = "[" ArrayLength "]" ElementType .
+# ArrayLength = Expression .
+# ElementType = Type .
+rule ArrayType    { "[" <ArrayLength> "]" <ElementType> }
+rule ArrayLength  { <Expression> }
+rule ElementType  { <Type> }
+
+# StructType    = "struct" "{" { FieldDecl ";" } "}" .
+# FieldDecl     = (IdentifierList Type | EmbeddedField) [ Tag ] .
+# EmbeddedField = [ "*" ] TypeName .
+# Tag           = string_lit .
+rule StructType    { "struct" "{" ( <FieldDecl> ";"? )* "}" }
+rule FieldDecl     { (<IdentifierList> <Type> | <EmbeddedField>) <Tag>? }
+rule EmbeddedField { [ "*" ] <TypeName> }
+rule Tag           { <string_lit> }
+
+# PointerType = "*" BaseType .
+# BaseType    = Type .
+rule PointerType { "*" <BaseType> }
+rule BaseType    { <Type> }
+
+# InterfaceType      = "interface" "{" { MethodSpec ";" } "}" .
+# MethodSpec         = MethodName Signature | InterfaceTypeName .
+# MethodName         = identifier .
+# InterfaceTypeName  = TypeName .
+rule InterfaceType      { "interface" "{" ( <MethodSpec> ";"? )* "}" }
+rule MethodSpec         { <MethodName> <Signature> | <InterfaceTypeName> }
+rule MethodName         { <identifier> }
+rule InterfaceTypeName  { <TypeName> }
+
+# SliceType = "[" "]" ElementType .
+rule SliceType { "[" "]" <ElementType> }
+
+# MapType     = "map" "[" KeyType "]" ElementType .
+# KeyType     = Type .
+rule MapType { "map" "[" <KeyType> "]" <ElementType> }
+rule KeyType { <Type> }
+
+# ChannelType = ( "chan" | "chan" "<-" | "<-" "chan" ) ElementType .
+rule ChannelType { ( "chan" | "chan" "<-" | "<-" "chan" ) <ElementType> }
+
+# QualifiedIdent = PackageName "." identifier .
+rule QualifiedIdent { <PackageName> "." <identifier> }
+
+# Block = "{" StatementList "}" .
+# StatementList = { Statement ";" } .
+rule Block         { "{" <StatementList> "}" }
+rule StatementList { ( <Statement> ";"? )*   }
 
 # string_lit             = raw_string_lit | interpreted_string_lit .
 # raw_string_lit         = "`" { unicode_char | newline } "`" .

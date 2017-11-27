@@ -7,6 +7,9 @@ use Inline::Go::Grammar;
 my $code = 'package main
 import "C"
 import "fmt"
+
+func main() {
+}
 ';
  
 # 
