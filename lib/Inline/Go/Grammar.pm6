@@ -266,6 +266,7 @@ rule StatementList { { say "StatementList"} ( <Statement> ';'? )*   }
 #
 # SimpleStmt = EmptyStmt | ExpressionStmt | SendStmt | IncDecStmt | Assignment | ShortVarDecl .
 rule Statement {
+    { say "Statement"}
     <Declaration> | <LabeledStmt> | <SimpleStmt> |
     <GoStmt> | <ReturnStmt> | <BreakStmt> | <ContinueStmt> | <GotoStmt> |
     <FallthroughStmt> | <Block> | <IfStmt> | <SwitchStmt> | <SelectStmt> |
@@ -273,7 +274,9 @@ rule Statement {
 }
 
 rule SimpleStmt {
-    <EmptyStmt> | <ExpressionStmt> | <SendStmt> | <IncDecStmt> |  <Assignment> |
+    { say "SimpleStmt"}
+    # <EmptyStmt>? |
+    <ExpressionStmt> | <SendStmt> | <IncDecStmt> |  <Assignment> |
     <ShortVarDecl>
 }
 
@@ -283,7 +286,7 @@ rule LabeledStmt { <Label> ":" <Statement> }
 rule Label       { <identifier> }
 
 # EmptyStmt = .
-rule EmptyStmt { '' }
+#rule EmptyStmt { { say "EmptyStmt"} '' }
 
 # ExpressionStmt = Expression .
 rule ExpressionStmt { <Expression> }
@@ -319,10 +322,12 @@ token big_u_value      { '\\' "U" <hex_digit> <hex_digit> <hex_digit> <hex_digit
                                   <hex_digit> <hex_digit> <hex_digit> <hex_digit> }
 token escaped_char     { '\\' ( "a" | "b" | "f" | "n" | "r" | "t" | "v" | '\\' | "'" | '"' ) }
 
+# newline        = /* the Unicode code point U+000A */ .
 # unicode_char   = /* an arbitrary Unicode code point except newline */ .
 # unicode_letter = /* a Unicode code point classified as "Letter" */ .
 # unicode_digit  = /* a Unicode code point classified as "Number, decimal digit" */ .
-token unicode_char   { \N }
+token newline        { \n }
+token unicode_char   { <alpha> }
 token unicode_letter { <alpha> }
 token unicode_digit  { <digit> }
 

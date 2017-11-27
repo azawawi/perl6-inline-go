@@ -9,10 +9,9 @@ use Inline::Go::Grammar;
 # 
 # func main() { }
 # const zero = 0.0';
-my $code = 'package main;
-import "fmt";
-func main() {}
-';
+# { fmt.Println("Hello") }
+# func main() {}
+my $code = 'package main; import "fmt"; ';
  
 # 
 # //export Add_Int32
