@@ -1,0 +1,31 @@
+language: perl6
+
+os:
+  - linux
+  - osx
+
+perl6:
+  - latest
+
+before_install:
+    # Display travis OS name
+  - echo $TRAVIS_OS_NAME
+
+  # Debian-based libmsgpack installation
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get -qq update                ; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get install -y golang-go ; fi
+
+
+  # # macOS libmsgpack installation
+  # - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew update          ; fi
+  # - if [ "$TRAVIS_OS_NAME" == "osx" ]; then brew install go ; fi
+
+install:
+  - rakudobrew build zef
+  - zef --depsonly install .
+  - zef install Test::META
+  - zef build .
+      
+script:
+    - AUTHOR_TESTING=1 prove -ve "perl6 -Ilib"
+    - zef install .
