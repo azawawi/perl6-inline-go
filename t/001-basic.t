@@ -1,11 +1,9 @@
-
-
 use v6.c;
 use Test;
 
-use Inline::Go;
-
 plan 2;
+
+use Inline::Go;
 
 my $code = '
 package main

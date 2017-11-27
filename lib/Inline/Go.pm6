@@ -20,6 +20,8 @@ method import-all {
 
     # Build shared C library from go code
     my $output = qq:x/go build -o $so-file-name -buildmode=c-shared $go-file-name/;
+    
+    #TODO delete generated files from buildmode=c-shared
 
     self.parse-go-functions-and-import-them;
 }
