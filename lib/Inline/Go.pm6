@@ -144,7 +144,7 @@ method _import_function($function) {
     ";
     # say $func-decl;
     my $func = EVAL $func-decl;
-    say "function definition: '$( $func.perl )'";
+    # say "function definition: '$( $func.perl )'";
     no MONKEY-SEE-NO-EVAL;
 
     return $func;
