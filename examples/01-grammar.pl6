@@ -2,14 +2,15 @@
 use v6.c;
 
 use lib 'lib';
+
 use Inline::Go::Grammar;
 
-my $code = 'package main
-import "C"
-import "fmt"
-
-func main() {
-}
+# import "fmt"
+# 
+# func main() { }
+# const zero = 0.0';
+my $code = 'package main;
+import "fmt";
 ';
  
 # 

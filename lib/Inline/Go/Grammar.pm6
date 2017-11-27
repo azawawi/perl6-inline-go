@@ -16,7 +16,7 @@ use v6.c;
 unit grammar Inline::Go::Grammar;
 
 # SourceFile = PackageClause ";" { ImportDecl ";" } { TopLevelDecl ";" } .
-token TOP { <PackageClause> ';'? (<ImportDecl> ';'?)* ( <TopLevelDecl> ";"? )* }
+rule TOP { <PackageClause> (';')? (<ImportDecl> ';'?)* ( <TopLevelDecl> ';'? )* }
 
 # PackageClause  = "package" PackageName .
 # PackageName    = identifier .
@@ -40,15 +40,93 @@ rule TopLevelDecl { <Declaration> | <FunctionDecl> | <MethodDecl> }
 #
 # IdentifierList = identifier { "," identifier } .
 # ExpressionList = Expression { "," Expression } .
-rule ConstDecl      { "const" ( <ConstSpec> | "(" ( <ConstSpec> ";"? )* ")" ) }
+rule ConstDecl      { "const" ( <ConstSpec> | "(" ( <ConstSpec> ';'? )* ")" ) }
 rule ConstSpec      { <IdentifierList> ( <Type>? "=" <ExpressionList> )?      }
 
 rule IdentifierList { <identifier> ( "," <identifier> )* }
 rule ExpressionList { <Expression> ( "," <Expression> )* }
 
+# Expression = UnaryExpr | Expression binary_op Expression .
+# UnaryExpr  = PrimaryExpr | unary_op UnaryExpr .
+# 
+# binary_op  = "||" | "&&" | rel_op | add_op | mul_op .
+# rel_op     = "==" | "!=" | "<" | "<=" | ">" | ">=" .
+# add_op     = "+" | "-" | "|" | "^" .
+# mul_op     = "*" | "/" | "%" | "<<" | ">>" | "&" | "&^" .
+# 
+# unary_op   = "+" | "-" | "!" | "^" | "*" | "&" | "<-" .
+rule Expression { <UnaryExpr> | <Expression> <binary_op> <Expression> }
+rule UnaryExpr  { <PrimaryExpr> | <unary_op> <UnaryExpr> }
+
+rule binary_op  { "||" | "&&" | <rel_op> | <add_op> | <mul_op> }
+rule rel_op     { "==" | "!=" | "<" | "<=" | ">" | ">="        }
+rule add_op     { "+" | "-" | "|" | "^"                        }
+rule mul_op     { "*" | "/" | "%" | "<<" | ">>" | "&" | "&^"   }
+rule unary_op   { "+" | "-" | "!" | "^" | "*" | "&" | "<-"     }
+
+# PrimaryExpr =
+#   Operand |
+#   Conversion |
+#   PrimaryExpr Selector |
+#   PrimaryExpr Index |
+#   PrimaryExpr Slice |
+#   PrimaryExpr TypeAssertion |
+#   PrimaryExpr Arguments .
+#
+# Selector       = "." identifier .
+# Index          = "[" Expression "]" .
+# Slice          = "[" [ Expression ] ":" [ Expression ] "]" |
+#                  "[" [ Expression ] ":" Expression ":" Expression "]" .
+# TypeAssertion  = "." "(" Type ")" .
+# Arguments      = "(" [ ( ExpressionList | Type [ "," ExpressionList ] ) [ "..." ] [ "," ] ] ")" .
+rule PrimaryExpr {
+    <Operand> |
+    <Conversion> |
+    <PrimaryExpr> <Selector> |
+    <PrimaryExpr> <Index> |
+    <PrimaryExpr> <Slice> |
+    <PrimaryExpr> <TypeAssertion> |
+    <PrimaryExpr> <Arguments> }
+
+rule Selector       { "." <identifier> }
+rule Index          { "[" <Expression> "]" }
+rule Slice          { "[" <Expression>? ":" <Expression>? "]" |
+                      "[" <Expression>? ":" <Expression> ":" <Expression> "]" }
+rule TypeAssertion  { "." "(" <Type> ")" }
+rule Arguments      { "(" ( ( <ExpressionList> | <Type> ( "," <ExpressionList> )? ) "..."? ","? )? ")" }
+
+# Operand     = Literal | OperandName | MethodExpr | "(" Expression ")" .
+# Literal     = BasicLit | CompositeLit | FunctionLit .
+# BasicLit    = int_lit | float_lit | imaginary_lit | rune_lit | string_lit .
+# OperandName = identifier | QualifiedIdent.
+rule Operand     { <Literal> | <OperandName> | <MethodExpr> | "(" <Expression> ")"       }
+rule Literal     { <BasicLit> | <CompositeLit> | <FunctionLit>                           }
+rule BasicLit    { <int_lit> | <float_lit> | <imaginary_lit> | <rune_lit> | <string_lit> }
+rule OperandName { <identifier> | <QualifiedIdent>                                       }
+
+# int_lit     = decimal_lit | octal_lit | hex_lit .
+# decimal_lit = ( "1" … "9" ) { decimal_digit } .
+# octal_lit   = "0" { octal_digit } .
+# hex_lit     = "0" ( "x" | "X" ) hex_digit { hex_digit } .
+rule int_lit     { <decimal_lit> | <octal_lit> | <hex_lit> }
+rule decimal_lit { ( "1" ... "9" ) <decimal_digit>* }
+token octal_lit  { "0" <octal_digit>* }
+token hex_lit    { "0" ( "x" | "X" ) <hex_digit> <hex_digit>* }
+
+# float_lit = decimals "." [ decimals ] [ exponent ] |
+#             decimals exponent |
+#             "." decimals [ exponent ] .
+# decimals  = decimal_digit { decimal_digit } .
+# exponent  = ( "e" | "E" ) [ "+" | "-" ] decimals .
+token float_lit { <decimals> "." <decimals>? <exponent>? |
+                  <decimals> <exponent> |
+                  "." <decimals> <exponent>? }
+token decimals  { <decimal_digit> <decimal_digit>* }
+token exponent  { ( "e" | "E" ) ( "+" | "-" )? <decimals> }
+
 # TypeDecl = "type" ( TypeSpec | "(" { TypeSpec ";" } ")" ) .
 # TypeSpec = AliasDecl | TypeDef .
-rule TypeDecl { "type" ( <TypeSpec> | "(" ( <TypeSpec> ";"? )* ")" ) }
+rule TypeDecl { "type" ( <TypeSpec> | "(" ( <TypeSpec> ';'? )* ")" ) }
 rule TypeSpec { <AliasDecl> | <TypeDef> }
 
 # AliasDecl = identifier "=" Type .
@@ -59,7 +137,7 @@ rule TypeDef { <identifier> <Type> }
 
 # VarDecl = "var" ( VarSpec | "(" { VarSpec ";" } ")" ) .
 # VarSpec = IdentifierList ( Type [ "=" ExpressionList ] | "=" ExpressionList ) .
-rule VarDecl     { "var" ( <VarSpec> | "(" ( <VarSpec> ";"? )* ")" ) }
+rule VarDecl     { "var" ( <VarSpec> | "(" ( <VarSpec> ';'? )* ")" ) }
 rule VarSpec     { <IdentifierList> ( <Type> [ "=" <ExpressionList> ] | "=" <ExpressionList> ) }
 
 # FunctionDecl = "func" FunctionName ( Function | Signature ) .
@@ -87,7 +165,7 @@ rule Signature      { <Parameters> <Result>?                   }
 rule Result         { <Parameters> | <Type>                    }
 rule Parameters     { "(" ( <ParameterList> ","? )? ")"        }
 rule ParameterList  { <ParameterDecl> ( "," <ParameterDecl> )* }
-rule ParameterDecl  { <IdentifierList>? "..."? <Type>          }
+rule ParameterDecl  { <IdentifierList>? ("...")? <Type>        }
 
 # Type      = TypeName | TypeLit | "(" Type ")" .
 # TypeName  = identifier | QualifiedIdent .
@@ -109,9 +187,9 @@ rule ElementType  { <Type> }
 # FieldDecl     = (IdentifierList Type | EmbeddedField) [ Tag ] .
 # EmbeddedField = [ "*" ] TypeName .
 # Tag           = string_lit .
-rule StructType    { "struct" "{" ( <FieldDecl> ";"? )* "}" }
+rule StructType    { "struct" "{" ( <FieldDecl> ';'? )* "}" }
 rule FieldDecl     { (<IdentifierList> <Type> | <EmbeddedField>) <Tag>? }
-rule EmbeddedField { [ "*" ] <TypeName> }
+rule EmbeddedField { "*"? <TypeName> }
 rule Tag           { <string_lit> }
 
 # PointerType = "*" BaseType .
@@ -123,8 +201,8 @@ rule BaseType    { <Type> }
 # MethodSpec         = MethodName Signature | InterfaceTypeName .
 # MethodName         = identifier .
 # InterfaceTypeName  = TypeName .
-rule InterfaceType      { "interface" "{" ( <MethodSpec> ";"? )* "}" }
-rule MethodSpec         { <MethodName> <Signature> | <InterfaceTypeName> }
+rule InterfaceType      { "interface" "{" ( <MethodSpec> ';'? )* "}" }
+rule MethodSpec         { ( <MethodName> <Signature> | <InterfaceTypeName> ) }
 rule MethodName         { <identifier> }
 rule InterfaceTypeName  { <TypeName> }
 
@@ -145,7 +223,7 @@ rule QualifiedIdent { <PackageName> "." <identifier> }
 # Block = "{" StatementList "}" .
 # StatementList = { Statement ";" } .
 rule Block         { "{" <StatementList> "}" }
-rule StatementList { ( <Statement> ";"? )*   }
+rule StatementList { ( <Statement> ';'? )*   }
 
 # string_lit             = raw_string_lit | interpreted_string_lit .
 # raw_string_lit         = "`" { unicode_char | newline } "`" .
@@ -180,5 +258,14 @@ token unicode_char   { \w }
 token unicode_letter { \w }
 token unicode_digit  { \w }
 
+# letter        = unicode_letter | "_" .
+# decimal_digit = "0" … "9" .
+# octal_digit   = "0" … "7" .
+# hex_digit     = "0" … "9" | "A" … "F" | "a" … "f" .
+token letter        { <unicode_letter> | "_" }
+token decimal_digit { <[0..9]> }
+token octal_digit   { <[0..7]> }
+token hex_digit     { <[0..9]> | <[A..F]> | <[a..f]> }
+
 # identifier = letter { letter | unicode_digit } .
-token identifier { \w+ }
+token identifier { <alpha> <alnum>* }
