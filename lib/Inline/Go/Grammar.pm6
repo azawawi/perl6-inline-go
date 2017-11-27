@@ -124,6 +124,39 @@ token float_lit { <decimals> "." <decimals>? <exponent>? |
 token decimals  { <decimal_digit> <decimal_digit>* }
 token exponent  { ( "e" | "E" ) ( "+" | "-" )? <decimals> }
 
+# imaginary_lit = (decimals | float_lit) "i" .
+token imaginary_lit { (<decimals> | <float_lit>) "i" }
+
+# CompositeLit  = LiteralType LiteralValue .
+# LiteralType   = StructType | ArrayType | "[" "..." "]" ElementType |
+#                 SliceType | MapType | TypeName .
+# LiteralValue  = "{" [ ElementList [ "," ] ] "}" .
+# ElementList   = KeyedElement { "," KeyedElement } .
+# KeyedElement  = [ Key ":" ] Element .
+# Key           = FieldName | Expression | LiteralValue .
+# FieldName     = identifier .
+# Element       = Expression | LiteralValue .
+rule CompositeLit  { <LiteralType> <LiteralValue> }
+rule LiteralType   { <StructType> | <ArrayType> | "[" "..." "]" <ElementType> |
+                     <SliceType> | <MapType> | <TypeName> }
+rule LiteralValue  { "{" ( <ElementList> [ "," ] )? "}" }
+rule ElementList   { <KeyedElement> ( "," <KeyedElement> )* }
+rule KeyedElement  { ( <Key> ":" )? <Element> }
+rule Key           { <FieldName> | <Expression> | <LiteralValue> }
+rule FieldName     { <identifier> }
+rule Element       { <Expression> | <LiteralValue> }
+
+# FunctionLit = "func" Function .
+rule FunctionLit { "func" <Function> }
+
+# MethodExpr    = ReceiverType "." MethodName .
+# ReceiverType  = TypeName | "(" "*" TypeName ")" | "(" ReceiverType ")" .
+rule MethodExpr    { <ReceiverType> "." <MethodName> }
+rule ReceiverType  { <TypeName> | "(" "*" <TypeName> ")" | "(" <ReceiverType> ")" }
+
+# Conversion = Type "(" Expression [ "," ] ")" .
+rule Conversion { <Type> "(" <Expression> ","? ")" }
+
 # TypeDecl = "type" ( TypeSpec | "(" { TypeSpec ";" } ")" ) .
 # TypeSpec = AliasDecl | TypeDef .
 rule TypeDecl { "type" ( <TypeSpec> | "(" ( <TypeSpec> ';'? )* ")" ) }
@@ -222,8 +255,43 @@ rule QualifiedIdent { <PackageName> "." <identifier> }
 
 # Block = "{" StatementList "}" .
 # StatementList = { Statement ";" } .
-rule Block         { "{" <StatementList> "}" }
-rule StatementList { ( <Statement> ';'? )*   }
+rule Block         { { say "Block"} '{' <StatementList> '}' }
+rule StatementList { { say "StatementList"} ( <Statement> ';'? )*   }
+
+# Statement =
+#   Declaration | LabeledStmt | SimpleStmt |
+#   GoStmt | ReturnStmt | BreakStmt | ContinueStmt | GotoStmt |
+#   FallthroughStmt | Block | IfStmt | SwitchStmt | SelectStmt | ForStmt |
+#   DeferStmt .
+#
+# SimpleStmt = EmptyStmt | ExpressionStmt | SendStmt | IncDecStmt | Assignment | ShortVarDecl .
+rule Statement {
+    <Declaration> | <LabeledStmt> | <SimpleStmt> |
+    <GoStmt> | <ReturnStmt> | <BreakStmt> | <ContinueStmt> | <GotoStmt> |
+    <FallthroughStmt> | <Block> | <IfStmt> | <SwitchStmt> | <SelectStmt> |
+    <ForStmt> | <DeferStmt>
+}
+
+rule SimpleStmt {
+    <EmptyStmt> | <ExpressionStmt> | <SendStmt> | <IncDecStmt> |  <Assignment> |
+    <ShortVarDecl>
+}
+
+# LabeledStmt = Label ":" Statement .
+# Label       = identifier .
+rule LabeledStmt { <Label> ":" <Statement> }
+rule Label       { <identifier> }
+
+# EmptyStmt = .
+rule EmptyStmt { '' }
+
+# ExpressionStmt = Expression .
+rule ExpressionStmt { <Expression> }
+
+# SendStmt = Channel "<-" Expression .
+# Channel  = Expression .
+rule SendStmt { <Channel> "<-" <Expression> }
+rule Channel  { <Expression> }
 
 # string_lit             = raw_string_lit | interpreted_string_lit .
 # raw_string_lit         = "`" { unicode_char | newline } "`" .
@@ -254,9 +322,9 @@ token escaped_char     { '\\' ( "a" | "b" | "f" | "n" | "r" | "t" | "v" | '\\' |
 # unicode_char   = /* an arbitrary Unicode code point except newline */ .
 # unicode_letter = /* a Unicode code point classified as "Letter" */ .
 # unicode_digit  = /* a Unicode code point classified as "Number, decimal digit" */ .
-token unicode_char   { \w }
-token unicode_letter { \w }
-token unicode_digit  { \w }
+token unicode_char   { \N }
+token unicode_letter { <alpha> }
+token unicode_digit  { <digit> }
 
 # letter        = unicode_letter | "_" .
 # decimal_digit = "0" … "9" .

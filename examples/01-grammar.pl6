@@ -11,6 +11,7 @@ use Inline::Go::Grammar;
 # const zero = 0.0';
 my $code = 'package main;
 import "fmt";
+func main() {}
 ';
  
 # 
