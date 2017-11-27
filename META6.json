@@ -8,7 +8,8 @@
     "name"          : "Inline::Go",
     "perl"          : "6.c",
     "provides"      : {
-        "Inline::Go" : "lib/Inline/Go.pm6"
+        "Inline::Go"          : "lib/Inline/Go.pm6",
+        "Inline::Go::Grammar" : "lib/Inline/Go/Grammar.pm6"
     },
     "source-url"    : "git://github.com/azawawi/perl6-inline-go.git",
     "tags"          : [
