@@ -3,7 +3,7 @@ use v6.c;
 
 #
 # Reference:
-# The Go Programming Language Specification 
+# The Go Programming Language Specification
 # https://golang.org/ref/spec
 #
 
@@ -48,12 +48,12 @@ rule ExpressionList { <Expression> ( "," <Expression> )* }
 
 # Expression = UnaryExpr | Expression binary_op Expression .
 # UnaryExpr  = PrimaryExpr | unary_op UnaryExpr .
-# 
+#
 # binary_op  = "||" | "&&" | rel_op | add_op | mul_op .
 # rel_op     = "==" | "!=" | "<" | "<=" | ">" | ">=" .
 # add_op     = "+" | "-" | "|" | "^" .
 # mul_op     = "*" | "/" | "%" | "<<" | ">>" | "&" | "&^" .
-# 
+#
 # unary_op   = "+" | "-" | "!" | "^" | "*" | "&" | "<-" .
 rule Expression { <UnaryExpr> | <Expression> <binary_op> <Expression> }
 rule UnaryExpr  { <PrimaryExpr> | <unary_op> <UnaryExpr> }
@@ -275,10 +275,12 @@ rule Statement {
 
 rule SimpleStmt {
     { say "SimpleStmt"}
-    # <EmptyStmt>? |
-    <ExpressionStmt> | <SendStmt> | <IncDecStmt> |  <Assignment> |
+    <EmptyStmt> | <ExpressionStmt> | <SendStmt> | <IncDecStmt> |  <Assignment> |
     <ShortVarDecl>
 }
+
+# GoStmt = "go" Expression .
+rule GoStmt { "go" <Expression> }
 
 # LabeledStmt = Label ":" Statement .
 # Label       = identifier .
@@ -286,7 +288,7 @@ rule LabeledStmt { <Label> ":" <Statement> }
 rule Label       { <identifier> }
 
 # EmptyStmt = .
-#rule EmptyStmt { { say "EmptyStmt"} '' }
+token EmptyStmt { { say "EmptyStmt" } '' }
 
 # ExpressionStmt = Expression .
 rule ExpressionStmt { <Expression> }
@@ -295,6 +297,84 @@ rule ExpressionStmt { <Expression> }
 # Channel  = Expression .
 rule SendStmt { <Channel> "<-" <Expression> }
 rule Channel  { <Expression> }
+
+#IncDecStmt = Expression ( "++" | "--" ) .
+rule IncDecStmt { <Expression> ( "++" | "--" ) }
+
+# Assignment = ExpressionList assign_op ExpressionList .
+#
+# assign_op = [ add_op | mul_op ] "=" .
+rule Assignment { {say "Assignment"} <ExpressionList> <assign_op> <ExpressionList> }
+
+rule assign_op { (add_op | mul_op)?  "=" }
+
+# ShortVarDecl = IdentifierList ":=" ExpressionList .
+rule ShortVarDecl { <IdentifierList> ":=" <ExpressionList> }
+
+# ReturnStmt = "return" [ ExpressionList ] .
+rule ReturnStmt { "return" <ExpressionList>? }
+
+# BreakStmt = "break" [ Label ] .
+rule BreakStmt { "break" <Label>? }
+
+# ContinueStmt = "continue" [ Label ] .
+rule ContinueStmt { "continue" <Label>? }
+
+# GotoStmt = "goto" Label .
+rule GotoStmt { "goto" <Label> }
+
+# IfStmt = "if" [ SimpleStmt ";" ] Expression Block [ "else" ( IfStmt | Block ) ] .
+rule IfStmt { "if" ( <SimpleStmt> ";" )? <Expression> <Block> ( "else" ( <IfStmt> | <Block> ) )? }
+
+# SwitchStmt = ExprSwitchStmt | TypeSwitchStmt .
+rule SwitchStmt { <ExprSwitchStmt> | <TypeSwitchStmt> }
+
+# ExprSwitchStmt = "switch" [ SimpleStmt ";" ] [ Expression ] "{" { ExprCaseClause } "}" .
+# ExprCaseClause = ExprSwitchCase ":" StatementList .
+# ExprSwitchCase = "case" ExpressionList | "default" .
+rule ExprSwitchStmt { "switch" ( <SimpleStmt> ";" )? <Expression>? "{" ( <ExprCaseClause> )* "}" }
+rule ExprCaseClause { <ExprSwitchCase> ":" <StatementList> }
+rule ExprSwitchCase { "case" <ExpressionList> | "default" }
+
+# TypeSwitchStmt  = "switch" [ SimpleStmt ";" ] TypeSwitchGuard "{" { TypeCaseClause } "}" .
+# TypeSwitchGuard = [ identifier ":=" ] PrimaryExpr "." "(" "type" ")" .
+# TypeCaseClause  = TypeSwitchCase ":" StatementList .
+# TypeSwitchCase  = "case" TypeList | "default" .
+# TypeList        = Type { "," Type } .
+rule TypeSwitchStmt  { "switch" [ <SimpleStmt> ";" ] <TypeSwitchGuard> "{" { <TypeCaseClause> } "}" }
+rule TypeSwitchGuard { [ <identifier> ":=" ] <PrimaryExpr> "." "(" "type" ")" }
+rule TypeCaseClause  { <TypeSwitchCase> ":" <StatementList> }
+rule TypeSwitchCase  { "case" <TypeList> | "default" }
+rule TypeList        { <Type> ( "," <Type> )* }
+
+# SelectStmt = "select" "{" { CommClause } "}" .
+# CommClause = CommCase ":" StatementList .
+# CommCase   = "case" ( SendStmt | RecvStmt ) | "default" .
+# RecvStmt   = [ ExpressionList "=" | IdentifierList ":=" ] RecvExpr .
+# RecvExpr   = Expression .
+rule SelectStmt { "select" "{" <CommClause>* "}" }
+rule CommClause { <CommCase> ":" <StatementList> }
+rule CommCase   { "case" ( <SendStmt> | <RecvStmt> ) | "default" }
+rule RecvStmt   { ( <ExpressionList> "=" | <IdentifierList> ":=" )? <RecvExpr> }
+rule RecvExpr   { <Expression> }
+
+# ForStmt = "for" [ Condition | ForClause | RangeClause ] Block .
+# Condition = Expression .
+rule ForStmt   { "for" ( <Condition> | <ForClause> | <RangeClause> )? <Block> }
+rule Condition { <Expression> }
+
+# ForClause = [ InitStmt ] ";" [ Condition ] ";" [ PostStmt ] .
+# InitStmt = SimpleStmt .
+# PostStmt = SimpleStmt .
+rule ForClause { <InitStmt>? ";" <Condition>? ";" <PostStmt>? }
+rule InitStmt { <SimpleStmt> }
+rule PostStmt { <SimpleStmt> }
+
+#RangeClause = [ ExpressionList "=" | IdentifierList ":=" ] "range" Expression .
+rule RangeClause { ( <ExpressionList> "=" | <IdentifierList> ":=" )? "range" <Expression> }
+
+# DeferStmt = "defer" Expression .
+rule DeferStmt { "defer" <Expression> }
 
 # string_lit             = raw_string_lit | interpreted_string_lit .
 # raw_string_lit         = "`" { unicode_char | newline } "`" .
