@@ -21,7 +21,7 @@ use Inline::Go::Grammar;
     # Test package with single/multiple imports
     my $rule  = 'TOP';
     my $code  = 'package main import "fmt"';
-    my $match = Inline::Go::Grammar.parse( $code );
+    my $match = Inline::Go::Grammar.parse( $code, :rule($rule) );
     ok $match.defined, "'$code' matches '$rule'";
 
     $code  = 'package main import "fmt" import "math"';
