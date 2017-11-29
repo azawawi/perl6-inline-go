@@ -320,6 +320,9 @@ rule BreakStmt { "break" <Label>? }
 # ContinueStmt = "continue" [ Label ] .
 rule ContinueStmt { "continue" <Label>? }
 
+# FallthroughStmt = "fallthrough" .
+rule FallthroughStmt { "fallthrough" }
+
 # GotoStmt = "goto" Label .
 rule GotoStmt { "goto" <Label> }
 
