@@ -5,23 +5,54 @@ use NativeCall;
 
 unit class Inline::Go;
 
+# The Go code that needs to be inlined
 has $.code;
 
-#TODO use temp directory
-#our ($so-file-name, $so-file-handle) = tempfile( :suffix('.so') );
-our $so-file-name = './foo.so';
+# Temporary shard library file name
+has $!so-file-name;
+
+# Temporary directory
+has $!temp-dir;
 
 method import-all {
-    # Create a temporary go source file
-    my ($go-file-name, $go-file-handle) = tempfile( :suffix('.go') );
+    # Create a temporary build directory
+    $!temp-dir = tempdir( :!unlink ).IO.add( "perl6-inline-go" )
+        unless $!temp-dir.defined;
+    $!temp-dir.mkdir;
+    my $go-file-name = ~$!temp-dir.add( "foo.go" );
 
     # Write provided go code into temporay file
-    $go-file-handle.spurt($!code);
+    $go-file-name.IO.spurt( $!code, :createonly );
 
     # Build shared C library from go code
-    my $output = qq:x/go build -o $so-file-name -buildmode=c-shared $go-file-name/;
-    
-    #TODO delete generated files from buildmode=c-shared
+    my $output;
+    if $*DISTRO.is-win {
+        # Windows platform magic
+        # <El_Che> azawawi: https://stackoverflow.com/questions/40573401/building-a-dll-with-go-1-7
+        # <-- a two step solution?
+        $!so-file-name = ~$!temp-dir.add( "foo.dll" )
+            unless $!so-file-name.defined;
+
+        # Need to force gcc into linking go runtime
+        my %exported = self.find-exported-go-functions;
+        die "Please export at least one Go function for windows support to work properly"
+            if %exported.elems == 0;
+        my $function = %exported.keys[0];
+        my $foo_c_workaround = "
+#include \"foo.h\"
+void onlyNeededToForceGoRuntimeLinkage() \{
+    void *ptr = $function;
+\}
+        ";
+        $!temp-dir.add( "foo.c" ).IO.spurt( $foo_c_workaround, :createonly );
+        $output = qq:x/cd $!temp-dir && go build -o foo.a -buildmode=c-archive foo.go/;
+        $output = qq:x/cd $!temp-dir && gcc -shared -pthread -o foo.dll foo.c foo.a -lWinMM -lntdll -lWS2_32/;
+    } else {
+        # Linux, macOS platforms
+        $!so-file-name = ~$!temp-dir.add( "foo.so" )
+            unless $!so-file-name.defined;
+        $output = qq:x/go build -o $!so-file-name -buildmode=c-shared $go-file-name/;
+    }
 
     self.parse-go-functions-and-import-them;
 }
@@ -136,7 +167,7 @@ method _import_function($function) {
             my sub _$func-name\( $signature )
                 $ret-decl
                 is symbol( '$func-name' )
-                is native( '$so-file-name' )
+                is native( '$!so-file-name' )
                 \{ * \};
 
             _$func-name\( $params \);
