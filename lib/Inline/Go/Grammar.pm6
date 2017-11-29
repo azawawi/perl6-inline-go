@@ -255,8 +255,8 @@ rule QualifiedIdent { <PackageName> "." <identifier> }
 
 # Block = "{" StatementList "}" .
 # StatementList = { Statement ";" } .
-rule Block         { { say "Block"} '{' <StatementList> '}' }
-rule StatementList { { say "StatementList"} ( <Statement> ';'? )*   }
+rule Block         { '{' <StatementList> '}' }
+rule StatementList { ( <Statement> ';'? )*   }
 
 # Statement =
 #   Declaration | LabeledStmt | SimpleStmt |
@@ -266,7 +266,6 @@ rule StatementList { { say "StatementList"} ( <Statement> ';'? )*   }
 #
 # SimpleStmt = EmptyStmt | ExpressionStmt | SendStmt | IncDecStmt | Assignment | ShortVarDecl .
 rule Statement {
-    { say "Statement"}
     <Declaration> | <LabeledStmt> | <SimpleStmt> |
     <GoStmt> | <ReturnStmt> | <BreakStmt> | <ContinueStmt> | <GotoStmt> |
     <FallthroughStmt> | <Block> | <IfStmt> | <SwitchStmt> | <SelectStmt> |
@@ -274,7 +273,6 @@ rule Statement {
 }
 
 rule SimpleStmt {
-    { say "SimpleStmt"}
     <EmptyStmt> | <ExpressionStmt> | <SendStmt> | <IncDecStmt> |  <Assignment> |
     <ShortVarDecl>
 }
@@ -288,7 +286,7 @@ rule LabeledStmt { <Label> ":" <Statement> }
 rule Label       { <identifier> }
 
 # EmptyStmt = .
-token EmptyStmt { { say "EmptyStmt" } '' }
+token EmptyStmt { '' }
 
 # ExpressionStmt = Expression .
 rule ExpressionStmt { <Expression> }
@@ -304,7 +302,7 @@ rule IncDecStmt { <Expression> ( "++" | "--" ) }
 # Assignment = ExpressionList assign_op ExpressionList .
 #
 # assign_op = [ add_op | mul_op ] "=" .
-rule Assignment { {say "Assignment"} <ExpressionList> <assign_op> <ExpressionList> }
+rule Assignment { <ExpressionList> <assign_op> <ExpressionList> }
 
 rule assign_op { (add_op | mul_op)?  "=" }
 
