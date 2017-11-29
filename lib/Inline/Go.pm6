@@ -16,7 +16,7 @@ has $!temp-dir;
 
 method import-all {
     # Create a temporary build directory
-    $!temp-dir = tempdir( :!unlink ).IO.add( "perl6-inline-go" )
+    $!temp-dir = tempdir.IO.add( "perl6-inline-go" )
         unless $!temp-dir.defined;
     $!temp-dir.mkdir;
     my $go-file-name = ~$!temp-dir.add( "foo.go" );
