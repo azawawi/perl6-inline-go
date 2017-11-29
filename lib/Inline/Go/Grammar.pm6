@@ -286,7 +286,7 @@ rule LabeledStmt { <Label> ":" <Statement> }
 rule Label       { <identifier> }
 
 # EmptyStmt = .
-token EmptyStmt { '' }
+token EmptyStmt { ';' }
 
 # ExpressionStmt = Expression .
 rule ExpressionStmt { <Expression> }
