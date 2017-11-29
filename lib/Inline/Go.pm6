@@ -5,6 +5,9 @@ use NativeCall;
 
 unit class Inline::Go;
 
+# Debug switch
+has $.debug;
+
 # The Go code that needs to be inlined
 has $.code;
 
@@ -75,7 +78,7 @@ method find-go-parameters(Str:D $signature) {
         for @parameters {
             #TODO support all go types
             my $parameter = $_.trim;
-            if $parameter ~~ / (\w+) \s+ (int|float64)?/ {
+            if $parameter ~~ / (\w+) \s+ (\w+)?/ {
                 my $parameter-name = $/[0];
                 my $parameter-type = $/[1];
                 take {
@@ -125,10 +128,21 @@ method import(Str:D $func-name) {
 
 method _import_function($function) {
     my %exports   = self.find-exported-go-functions;
-    #TODO support more 'Go' to 'Perl 6' type mapping
     my %go-to-p6-type-map =
+        "uint8"   => "uint8",
+        "uint16"  => "uint16",
+        "uint32"  => "uint32",
+        "uint64"  => "uint64",
+        "int8"    => "int8",
+        "int16"   => "int16",
+        "int32"   => "int32",
+        "int64"   => "int64",
         "int"     => "int32",
+        "rune"    => "int32",
+        "float32" => "num32",
         "float64" => "num64";
+        #TODO "complex64"
+        #TODO "complex128"
 
     my $func-name = $function<name>.trim;
     # Make sure function is exportable
@@ -173,7 +187,7 @@ method _import_function($function) {
             _$func-name\( $params \);
         \}
     ";
-    # say $func-decl;
+    say $func-decl if $!debug;
     my $func = EVAL $func-decl;
     # say "function definition: '$( $func.perl )'";
     no MONKEY-SEE-NO-EVAL;
