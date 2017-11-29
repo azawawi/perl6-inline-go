@@ -1,7 +1,7 @@
 # Inline::Go
 
  [![Build Status](https://travis-ci.org/azawawi/perl6-inline-go.svg?branch=master)](https://travis-ci.org/azawawi/perl6-inline-go) [![Build status](https://ci.appveyor.com/api/projects/status/github/azawawi/perl6-inline-go?svg=true)](https://ci.appveyor.com/project/azawawi/perl6-inline-go/branch/master)
- 
+
 
 Use inline [Go](https://golang.org/) code within your Perl 6 source code. The
 project has the following ambitious goals to achieve:
@@ -56,6 +56,9 @@ For more examples, please see the [examples](examples) folder.
 
 - Please install the Go language toolchain from [here](https://golang.org/dl/). You
 need at least Go 1.5 or later.
+
+- **On windows**, you need the gcc toolchain. Luckily you can have that easily
+by installing [Strawberry Perl](http://strawberryperl.com/).
 
 - Install it using zef (a module management tool bundled with Rakudo Star):
 
