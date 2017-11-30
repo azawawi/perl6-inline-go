@@ -14,10 +14,10 @@ project has the following ambitious goals to achieve:
 **Note:** This currently a totally **experimental** module. Please do not use on
 a production system.
 
-The current code base is using simple regexes to find go functions with simple
-Go to Perl 6 type mapping. The Perl 6 NativeCall Go function wrapper is add via
-an evil `EVAL` in the current package (i.e. Inline::Go) so it can be added only
-once.
+The module is currently using simple regular expression to find exported go
+functions signatures with a simple Go-to-Perl-6 type mapping. The Perl 6
+NativeCall Go function wrapper is added via an evil `EVAL` into the current
+object via a role (to support multiple objects).
 
 ## Example
 
@@ -83,7 +83,7 @@ $ AUTHOR_TESTING=1 prove -e "perl6 -Ilib"
 ## See Also
 
 - [Calling Go Functions from Other Languages](https://medium.com/learning-the-go-programming-language/calling-go-functions-from-other-languages-4c7d8bcc69bf).
-- [The Go Programming Language Specification ](https://golang.org/ref/spec)
+- [The Go Programming Language Specification ](https://golang.org/ref/spec).
 
 ## Author
 
