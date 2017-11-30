@@ -17,6 +17,23 @@ has $!so-file-name;
 # Temporary directory
 has $!temp-dir;
 
+# Golang to p6 type mapping
+my %go-to-p6-type-map =
+    "uint8"   => "uint8",
+    "uint16"  => "uint16",
+    "uint32"  => "uint32",
+    "uint64"  => "uint64",
+    "int8"    => "int8",
+    "int16"   => "int16",
+    "int32"   => "int32",
+    "int64"   => "int64",
+    "int"     => "int32",
+    "rune"    => "int32",
+    "float32" => "num32",
+    "float64" => "num64";
+    #TODO "complex64"
+    #TODO "complex128"
+
 method import-all {
     # Create a temporary build directory
     $!temp-dir = tempdir.IO.add( "perl6-inline-go" )
@@ -128,21 +145,6 @@ method import(Str:D $func-name) {
 
 method _import_function($function) {
     my %exports   = self.find-exported-go-functions;
-    my %go-to-p6-type-map =
-        "uint8"   => "uint8",
-        "uint16"  => "uint16",
-        "uint32"  => "uint32",
-        "uint64"  => "uint64",
-        "int8"    => "int8",
-        "int16"   => "int16",
-        "int32"   => "int32",
-        "int64"   => "int64",
-        "int"     => "int32",
-        "rune"    => "int32",
-        "float32" => "num32",
-        "float64" => "num64";
-        #TODO "complex64"
-        #TODO "complex128"
 
     my $func-name = $function<name>.trim;
     # Make sure function is exportable
