@@ -81,8 +81,8 @@ method find-exported-go-functions {
     my @exports = $!code.match( / '//export' \s+ (\w+) /, :global );
     my %results;
     for @exports {
-        my $func-name = ~$_[0];
-        %results{$func-name} = $func-name => 1;
+        my $func-name          = ~$_[0];
+        %results{ $func-name } = $func-name => 1;
     }
     %results;
 }
@@ -91,7 +91,6 @@ method find-go-parameters(Str:D $signature) {
     my @parameters = $signature.split(",");
     my $results    = gather {
         for @parameters {
-            #TODO support all go types
             my $parameter = $_.trim;
             if $parameter ~~ / (\w+) \s+ (\w+)?/ {
                 my $parameter-name = $/[0];
@@ -128,7 +127,9 @@ method find-go-functions {
 method import(Str:D $func-name) {
     # Check whether it is exportable
     my %exports   = self.find-exported-go-functions;
-    die "Function'$func-name' is not exported. Please add cgo's '//export $func-name' comment before your go function declaration." unless %exports{$func-name}.defined;
+    die "Function'$func-name' is not exported.
+Please add cgo's '//export $func-name' comment before your go function
+declaration." unless %exports{$func-name}.defined;
 
     # Import function
     my $functions = self.find-go-functions;
@@ -151,9 +152,9 @@ method import(Str:D $func-name) {
 
 method _import_function($function) {
     my %exports   = self.find-exported-go-functions;
-
     my $func-name = $function<name>.trim;
-    # Make sure function is exportable
+
+    # Return if the function is not exportable
     return unless %exports{$func-name}.defined;
 
     my $parameters  = $function<parameters>;
@@ -168,8 +169,7 @@ method _import_function($function) {
         my $p6-type = '';
         if $type.defined {
             $p6-type = %go-to-p6-type-map{$type};
-        }
-        else {
+        } else {
             warn "No type defined for '$name'";
         }
         "$p6-type \$$name";
