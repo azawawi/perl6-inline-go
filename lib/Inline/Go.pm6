@@ -135,12 +135,21 @@ method import(Str:D $func-name) {
 
     # Import function
     my $functions = self.find-go-functions;
-    my $imported = False;
+    my $func-decl;
     for @$functions {
         next if $func-name ne $_<name>.trim;
-        $imported = self._import_function($_).defined ?? True !! False;
+        $func-decl = self._import_function($_).defined ?? True !! False;
     }
-    die "Failed to import '$func-name'" unless $imported;
+
+    die "Failed to import '$func-name'" unless $func-decl.defined;
+
+    my $role-decl = "
+        role GoFunctionWrappers \{
+            $func-decl
+        \}
+    ";
+    self._apply-role( $role-decl );
+
 }
 
 method _import_function($function) {
@@ -177,7 +186,6 @@ method _import_function($function) {
 
     my $ret-decl = $return-type.defined ?? "returns $return-type" !! '';
     #say $ret-decl;
-    use MONKEY-SEE-NO-EVAL;
     my $func-decl = "
         method $func-name ( $signature ) \{
             my sub _$func-name\( $signature )
@@ -190,19 +198,39 @@ method _import_function($function) {
         \}
     ";
     say $func-decl if $!debug;
-    my $func = EVAL $func-decl;
-    # say "function definition: '$( $func.perl )'";
-    no MONKEY-SEE-NO-EVAL;
 
-    return $func;
+    return $func-decl;
 }
 
 method parse-go-functions-and-import-them {
     my %exports   = self.find-exported-go-functions;
     my $functions = self.find-go-functions;
     #say "functions: " ~ @functions.perl;
+    my @func-decls;
     for @$functions {
-        self._import_function($_)
+        my $func-name = $_<name>;
+        next unless %exports{ $func-name }.defined;
+
+        my $func-decl = self._import_function($_);
+        die "Failed to import '$func-name'" unless $func-decl.defined;
+        @func-decls.append( $func-decl )
     }
 
+    my $role-decl = "
+        role GoFunctionWrappers \{
+            $( @func-decls.join("\n") )
+        \}
+    ";
+    self._apply-role( $role-decl );
+
+    return;
+}
+
+method _apply-role($role-decl) {
+    use MONKEY-SEE-NO-EVAL;
+    my $role = EVAL $role-decl;
+    no MONKEY-SEE-NO-EVAL;
+    # Apply the role which adds the methods we need to the current object
+    # instead of the class
+    self does $role;
 }
