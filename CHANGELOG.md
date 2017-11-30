@@ -1,5 +1,8 @@
 # Change Log for `Inline::Go`
 
+## 0.0.4 - **NOT RELEASED**
+    - ...
+
 ## 0.0.3 - 1 Dec 2017
     - Add change log.
     - Use roles to add methods to objects instead of classes.
