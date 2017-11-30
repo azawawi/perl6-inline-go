@@ -81,7 +81,6 @@ method find-exported-go-functions {
     my @exports = $!code.match( / '//export' \s+ (\w+) /, :global );
     my %results;
     for @exports {
-        #say "Found exported go function: " ~ $_[0];
         my $func-name = ~$_[0];
         %results{$func-name} = $func-name => 1;
     }
@@ -89,7 +88,6 @@ method find-exported-go-functions {
 }
 
 method find-go-parameters(Str:D $signature) {
-    #say "Parsing signature: '$signature'";
     my @parameters = $signature.split(",");
     my $results    = gather {
         for @parameters {
@@ -121,7 +119,6 @@ method find-go-functions {
                 parameters  => $parameters,
                 return-type => $return-type,
             }
-            #say "Found go function: " ~ $function-name;
         }
     };
     $results;
@@ -163,8 +160,6 @@ method _import_function($function) {
     my $return-type = $function<return-type>.defined
         ?? %go-to-p6-type-map{$function<return-type>}
         !! $function<return-type>;
-    #say "Processing $func-name";
-    #say "Parameters: $( @$parameters.perl )";
     my $signature   = @$parameters.map({
         my $name = $_<name>;
         my $type = $_<type>;
@@ -185,7 +180,7 @@ method _import_function($function) {
     }).join(", ");
 
     my $ret-decl = $return-type.defined ?? "returns $return-type" !! '';
-    #say $ret-decl;
+
     my $func-decl = "
         method $func-name ( $signature ) \{
             my sub _$func-name\( $signature )
@@ -205,7 +200,6 @@ method _import_function($function) {
 method parse-go-functions-and-import-them {
     my %exports   = self.find-exported-go-functions;
     my $functions = self.find-go-functions;
-    #say "functions: " ~ @functions.perl;
     my @func-decls;
     for @$functions {
         my $func-name = $_<name>;
