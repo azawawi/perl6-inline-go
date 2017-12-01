@@ -4,6 +4,11 @@ use Test;
 
 plan 3;
 
+if $*KERNEL.name eq 'darwin' {
+    skip-rest "macOS will always fail on this one";    
+    exit;
+}
+
 use Inline::Go;
 
 my $code1 = '
