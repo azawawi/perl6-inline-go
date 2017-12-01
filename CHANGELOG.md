@@ -1,8 +1,8 @@
 # Change Log for `Inline::Go`
 
 ## 0.0.4 - **NOT RELEASED**
-    - Add support for Go C Strings with tests.
-    - Skip `003-multiple.t` on macOS since Go runtime always crashes.
+    - Add support for Go C Strings (with tests).
+    - Skip `003-multiple.t` on macOS since Go runtime always crashes on it.
 
 ## 0.0.3 - 1 Dec 2017
     - Add change log.
