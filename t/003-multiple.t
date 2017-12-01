@@ -5,7 +5,9 @@ use Test;
 plan 3;
 
 if $*KERNEL.name eq 'darwin' {
-    skip-rest "macOS will always fail on this one";    
+    # Crash: `runtime/cgo: could not obtain pthread_keys' on darwin/amd64
+    # Please see https://gist.github.com/hnakamur/56fa250ca8705b25ee11
+    skip-rest "macOS will always fail on this one";
     exit;
 }
 
