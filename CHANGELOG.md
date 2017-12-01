@@ -1,7 +1,7 @@
 # Change Log for `Inline::Go`
 
 ## 0.0.4 - **NOT RELEASED**
-    - ...
+    - Add support for Go C Strings with tests.
 
 ## 0.0.3 - 1 Dec 2017
     - Add change log.

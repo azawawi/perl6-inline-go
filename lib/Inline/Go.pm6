@@ -30,7 +30,10 @@ my %go-to-p6-type-map =
     "int"     => "int32",
     "rune"    => "int32",
     "float32" => "num32",
-    "float64" => "num64";
+    "float64" => "num64",
+    "*C.char" => "Str",
+    ;
+    #TODO C.xyz types also
     #TODO "complex64"
     #TODO "complex128"
 
@@ -92,7 +95,7 @@ method find-go-parameters(Str:D $signature) {
     my $results    = gather {
         for @parameters {
             my $parameter = $_.trim;
-            if $parameter ~~ / (\w+) \s+ (\w+)?/ {
+            if $parameter ~~ / (\w+) \s+ (\*? \w+ (\. \w+)? )?/ {
                 my $parameter-name = $/[0];
                 my $parameter-type = $/[1];
                 take {
@@ -170,7 +173,7 @@ method _import_function($function) {
         if $type.defined {
             $p6-type = %go-to-p6-type-map{$type};
         } else {
-            warn "No type defined for '$name'";
+            die "No type defined for '$name'";
         }
         "$p6-type \$$name";
     }).join(", ");
