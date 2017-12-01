@@ -95,7 +95,7 @@ method find-go-parameters(Str:D $signature) {
     my $results    = gather {
         for @parameters {
             my $parameter = $_.trim;
-            if $parameter ~~ / (\w+) \s+ (\*? \w+ (\. \w+)? )?/ {
+            if $parameter ~~ / (\w+) \s+ (\*? \w+ (\. \w+)? )? / {
                 my $parameter-name = $/[0];
                 my $parameter-type = $/[1];
                 take {
@@ -108,7 +108,10 @@ method find-go-parameters(Str:D $signature) {
 }
 
 method find-go-functions {
-    my @functions = $!code.match( /'func' \s+ (\w+) \s* '(' (.*?) ')' \s+ (\w+)? /, :global);
+    my @functions = $!code.match(
+        / 'func' \s+ (\w+) \s* '(' (.*?) ')' \s+ (\*? \w+ (\. \w+)? )? /,
+        :global
+    );
     my $results = gather {
         for @functions {
             my $function-name = ~$_[0];

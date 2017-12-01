@@ -1,7 +1,7 @@
 use v6.c;
 use Test;
 
-plan 10;
+plan 11;
 
 use Inline::Go;
 
@@ -32,14 +32,17 @@ func Add_Float64(a float64, b float64) float64 {
 
 //export GetCharCount
 func GetCharCount( cstr *C.char ) int {
-    str := C.GoString( cstr )
-    return utf8.RuneCountInString(str)
+    return utf8.RuneCountInString( C.GoString( cstr ) )
 }
 
 //export GetByteCount
 func GetByteCount( cstr *C.char ) int {
-    str := C.GoString( cstr )
-    return len(str)
+    return len( C.GoString( cstr ) )
+}
+
+//export AddString
+func AddString( cstr1 *C.char, cstr2 *C.char ) *C.char {
+    return C.CString( C.GoString( cstr1 ) + C.GoString( cstr2 ) )
 }
 
 func main() {
@@ -64,3 +67,7 @@ ok $go.Add_Float64(-1.Num, 1.Num)    ==   0, "Add_Float64(-1, 1) works";
 my $str = "\c[WINKING FACE]\c[RELIEVED FACE]";
 ok $go.GetCharCount($str) == $str.chars,        "Character count of '$str'";
 ok $go.GetByteCount($str) == $str.encode.bytes, "Byte count of '$str'";
+
+my $s1 = 'Hello ';
+my $s2 = "World \c[WINKING FACE]";
+ok $go.AddString( $s1, $s2 ) eq ($s1 ~ $s2), "String addition/return works";
