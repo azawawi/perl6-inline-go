@@ -1,7 +1,7 @@
 use v6.c;
 use Test;
 
-plan 24;
+plan 26;
 
 use Inline::Go;
 
@@ -9,6 +9,11 @@ my $code = '
 package main
 
 import ("C"; "unicode/utf8")
+
+//export EqualInt
+func EqualInt( a int, b int ) bool {
+    return a == b;
+}
 
 //export Add_Int8
 func Add_Int8(a int8, b int8) int8 {
@@ -80,6 +85,9 @@ func main() { }
 
 my $go = Inline::Go.new( :code( $code ) );
 $go.import-all;
+
+ok $go.EqualInt(1, 1) === True,  "Boolean True";
+ok $go.EqualInt(1, 0) === False, "Boolean False";
 
 ok $go.Add_Int8( 1, 2) == 3, "Add_Int8( 1, 2) works";
 ok $go.Add_Int8(-1, 1) == 0, "Add_Int8(-1, 1) works";

@@ -19,6 +19,7 @@ has $!temp-dir;
 
 # Golang to p6 type mapping
 my %go-to-p6-type-map =
+    "bool"    => "Bool",
     "uint8"   => "uint8",
     "uint16"  => "uint16",
     "uint32"  => "uint32",
@@ -195,7 +196,9 @@ method _import_function($function) {
                 is native( '$!so-file-name' )
                 \{ * \};
 
-            _$func-name\( $params \);
+            _$func-name\( $params \)$(
+                $return-type.defined && $return-type eq 'Bool' ?? ' == 1' !! ''
+            );
         \}
     ";
     say $func-decl if $!debug;
