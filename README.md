@@ -78,12 +78,11 @@ $ AUTHOR_TESTING=1 prove -e "perl6 -Ilib"
 
 - [Calling Go Functions from Other Languages](https://medium.com/learning-the-go-programming-language/calling-go-functions-from-other-languages-4c7d8bcc69bf).
 - [The Go Programming Language Specification ](https://golang.org/ref/spec).
-
-- [cgo Wiki](https://github.com/golang/go/wiki/cgo)
+- [cgo Wiki](https://github.com/golang/go/wiki/cgo).
 
 ## Author
 
-Ahmad M. Zawawi, [azawawi](https://github.com/azawawi/) on #perl6
+Ahmad M. Zawawi, [azawawi](https://github.com/azawawi/) on `#perl6`.
 
 ## License
 

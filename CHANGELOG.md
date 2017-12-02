@@ -1,12 +1,11 @@
 # Change Log for `Inline::Go`
 
 ## 0.0.5 - **UNDER DEVELOPMENT**
-    - Add support for `cgo`'s boolean `bool` type.
+    - Add `Bool`ean type support.
     - Add tests for:
-        - string
-        - int8 and int16.
-        - unsigned int(8|16|32|64)
-        - boolean types.
+        - Strings: `Str`.
+        - Boolean: `Bool`.
+        - Integers: `int8`, `int16` and `uint(8|16|32|64)`.
 
 ## 0.0.4 - 2 Dec 2017
     - Add support for Go C Strings (with tests).
