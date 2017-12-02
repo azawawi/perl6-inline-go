@@ -1,7 +1,7 @@
 use v6.c;
 use Test;
 
-plan 19;
+plan 24;
 
 use Inline::Go;
 
@@ -109,8 +109,13 @@ ok $go.Add_Float64( -1.Num,   1.Num) ==   0, "Add_Float64(-1, 1) works";
 
 my $str = "\c[WINKING FACE]\c[RELIEVED FACE]";
 ok $go.GetCharCount($str) == $str.chars,        "Character count of '$str'";
+ok $go.GetCharCount('')   == 0,                 "Zero Character count";
 ok $go.GetByteCount($str) == $str.encode.bytes, "Byte count of '$str'";
+ok $go.GetByteCount('')   == 0,                 "Zero Byte count";
 
 my $s1 = 'Hello ';
 my $s2 = "World \c[WINKING FACE]";
 ok $go.AddString( $s1, $s2 ) eq ($s1 ~ $s2), "String addition/return works";
+ok $go.AddString( '',  $s2 ) eq $s2,         "something + empty string addition/return";
+ok $go.AddString( $s1, '' )  eq $s1,         "Empty + something string addition/return";
+ok $go.AddString( '',  '' )  eq '',          "Empty String addition/return";
