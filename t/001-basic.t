@@ -1,7 +1,7 @@
 use v6.c;
 use Test;
 
-plan 11;
+plan 15;
 
 use Inline::Go;
 
@@ -9,6 +9,16 @@ my $code = '
 package main
 
 import ("C"; "unicode/utf8")
+
+//export Add_Int8
+func Add_Int8(a int8, b int8) int8 {
+    return a + b;
+}
+
+//export Add_Int16
+func Add_Int16(a int16, b int16) int16 {
+    return a + b;
+}
 
 //export Add_Int32
 func Add_Int32(a int32, b int32) int32 {
@@ -45,12 +55,17 @@ func AddString( cstr1 *C.char, cstr2 *C.char ) *C.char {
     return C.CString( C.GoString( cstr1 ) + C.GoString( cstr2 ) )
 }
 
-func main() {
-}
+func main() { }
 ';
 
 my $go = Inline::Go.new( :code( $code ) );
 $go.import-all;
+
+ok $go.Add_Int8( 1, 2) == 3, "Add_Int8( 1, 2) works";
+ok $go.Add_Int8(-1, 1) == 0, "Add_Int8(-1, 1) works";
+
+ok $go.Add_Int16( 1, 2) == 3, "Add_Int16( 1, 2) works";
+ok $go.Add_Int16(-1, 1) == 0, "Add_Int16(-1, 1) works";
 
 ok $go.Add_Int32( 1, 2) == 3, "Add_Int32( 1, 2) works";
 ok $go.Add_Int32(-1, 1) == 0, "Add_Int32(-1, 1) works";
